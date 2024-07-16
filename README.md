@@ -70,3 +70,75 @@ For cases where you need fine-grained control over when to re-render based on pr
 ### Summary
 
 Performing deep comparisons for non-primitive types in React components involves either using a custom comparison function with `React.memo`, leveraging libraries for immutable data structures, or manually implementing comparison logic within your components. Each approach has its trade-offs, so choose the one that best fits your application’s needs for performance and complexity management.
+
+
+To manage state updates and perform deep comparisons effectively in a React component using `useImmer`, we'll leverage the `produce` function from the Immer library. Immer simplifies the process of working with immutable state by allowing you to directly mutate a draft state within a callback function, which it then safely applies immutably. Here’s how you can use `useImmer` and `React.memo` together to handle state updates and optimize component rendering:
+
+### Example Using `useImmer` and `React.memo`
+
+First, ensure you have installed Immer in your project:
+
+```bash
+npm install immer
+```
+
+Here’s an example of how to implement `useImmer` and `React.memo`:
+
+```jsx
+import React from 'react';
+import { useImmer } from 'use-immer';
+
+const MyComponent = React.memo(({ complexObject }) => {
+  console.log('Component rendered');
+  return (
+    <div>
+      <pre>{JSON.stringify(complexObject, null, 2)}</pre>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Perform deep comparison of complexObject
+  return prevProps.complexObject === nextProps.complexObject;
+});
+
+// Usage
+function App() {
+  const [state, updateState] = useImmer({
+    data: {
+      id: 1,
+      name: 'Alice',
+      preferences: ['JavaScript', 'React']
+    }
+  });
+
+  const updatePreferences = () => {
+    updateState(draft => {
+      draft.data.preferences.push('Redux');
+    });
+  };
+
+  return (
+    <div>
+      <MyComponent complexObject={state.data} />
+      <button onClick={updatePreferences}>Add Preference</button>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### Explanation:
+
+1. **`useImmer` Hook**: This hook from the `use-immer` library allows you to manage immutable state updates with a simpler syntax. It returns a state value and an `updateState` function similar to `setState` in React’s `useState`, but it operates with Immer's draft state concept.
+
+2. **`MyComponent`**: This component is wrapped with `React.memo` to optimize rendering. The custom comparison function checks if `complexObject` has changed by shallow comparison, ensuring the component only re-renders when necessary.
+
+3. **Updating State**: In `App`, `updatePreferences` uses `updateState` from `useImmer` to update `state.data.preferences` immutably. Immer manages the immutability behind the scenes, and `React.memo` ensures that `MyComponent` only re-renders if `state.data` itself is replaced with a new object reference.
+
+### Benefits:
+
+- **Performance Optimization**: `React.memo` combined with a custom comparison function optimizes rendering by preventing unnecessary updates when props haven't changed.
+- **Immutability**: Immer simplifies working with immutable updates, reducing bugs related to accidental state mutations.
+- **Readability**: Using Immer improves code readability by allowing direct state mutations within a readable, imperative style.
+
+By leveraging `useImmer` and `React.memo` effectively, you can manage complex state updates and optimize rendering performance in your React applications. Adjust the custom comparison function in `React.memo` as needed to suit your specific deep comparison requirements for non-primitive types.
